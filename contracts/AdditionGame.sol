@@ -23,4 +23,3 @@ contract AdditionGame {
         return true;
     }
 }
-
