@@ -8,7 +8,7 @@
     "dev": "webpack-dev-server"
   },
   "dependencies": {
-    "caver-js": "0.0.2-m",
+    "caver-js": "^1.2.0",
     "connect-privkey-to-provider": "0.0.3",
     "spin.js": "4.0.0"
   },
