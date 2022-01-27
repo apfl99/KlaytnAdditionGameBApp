@@ -1,9 +1,12 @@
 import Caver from "caver-js";
+import { isTxHash } from "caver-js/packages/caver-utils";
+import { Spinner } from "spin.js";
 
 const config = {
 	rpcURL: 'https://api.baobab.klaytn.net:8651'
 }
 const cav = new Caver(config.rpcURL);
+const agContract = new cav.klay.Contract(DEPLOYED_ABI, DEPLOYED_ADDRESS);
 
 const App = {
   auth: {
@@ -64,27 +67,80 @@ const App = {
   },
 
   generateNumbers: async function () {
+    var num1 = Math.floor((Math.random() * 50 ) + 10);
+    var num2 = Math.floor((Math.random() * 50 ) + 10);
+    sessionStorage.setItem('result', num1+num2);
 
+    $('#start').hide();
+    $('#num1').text(num1);
+    $('#num2').text(num2);
+    $('#question').show();
+    document.querySelector('#answer').focus();
+
+    this.showTimer();
   },
 
   submitAnswer: async function () {
-
+    const result = sessionStorage.getItem('result');
+    var answer = $('#answer').val();
+    if (answer === result) {
+      if(confirm("Good Job!! 0.1 KLAY 받기")) {
+        if(await this.callContractBalance() >= 0.1) {
+          this.receiveKlay();
+        }
+        else {
+          alert("죄송합니다. 컨트랙의 KLAY가 다 소모되었습니다.");
+        }
+      }
+    } else {
+      alert("땡!!!!!!!!");
+    }
   },
 
   deposit: async function () {
+    var spinner = this.showSpinner();
+    const walletInstance = this.getWallet();
 
+    if (walletInstance) {
+      if ((await this.callOwner()).toUpperCase() !== walletInstance.address.toUpperCase()) return;
+      else {
+        var amount = $('#amount').val();
+        if (amount) {
+          agContract.methods.deposit().send({
+            from: walletInstance.address,
+            gas: '250000',
+            value: cav.utils.toPeb(amount, "KLAY")
+          })
+          .once('transactionHash', (txHash) => {
+            console.log(`txHash: ${txHash}`)
+          })
+          .once('receipt',(receipt) => {
+            console.log(`(#${receipt.blocknumber})`, receipt);
+            spinner.stop();
+            alert(amount + "KLAY를 컨트랙에 송금했습니다.");
+            location.reload();
+          })
+          .once('error', (error) => {
+            alert(error.message);
+          });
+        }
+        return;
+      } 
+    }
   },
 
   callOwner: async function () {
-
+    return await agContract.methods.owner().call();
   },
 
   callContractBalance: async function () {
-
+    return await agContract.methods.getBalance().call();
   },
 
   getWallet: function () {
-
+    if (cav.klay.accounts.wallet.length) {
+      return cav.klay.accounts.wallet[0]; // 로그인 계정
+    }
   },
 
   checkValidKeystore: function (keystore) {
@@ -113,9 +169,15 @@ const App = {
 
   changeUI: async function (walletInstance) {
     $('#loginModal').modal('hide');
-    $("#login").hide(); 
+    $('#login').hide(); 
     $('#logout').show();
+    $('#game').show();
     $('#address').append('<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>');     
+    $('#contractBalance').append('<p>' + '이벤트 잔액: ' + cav.utils.fromPeb(await this.callContractBalance(), "KLAY") + 'KLAY' + '</p>');
+    
+    if ((await this.callOwner()).toUpperCase() === walletInstance.address.toUpperCase()) {
+      $('#owner').show();
+    }
   },
 
   removeWallet: function () {
@@ -125,16 +187,49 @@ const App = {
   },
 
   showTimer: function () {
+    var seconds = 3;
+    $('#timer').text(seconds);
 
+    var interval = setInterval(() => {
+      $('#timer').text(--seconds);
+      if (seconds <= 0) {
+        $('#timer').text('');
+        $('#answer').val('');
+        $('#question').hide();
+        $('#start').show();
+        clearInterval(interval);
+      }
+    },1000);
   },
 
   showSpinner: function () {
-
+    var target = document.getElementById("spin");
+    return new Spinner(opts).spin(target);
   },
 
   receiveKlay: function () {
+    var spinner = this.showSpinner();
+    const walletInstance = this.getWallet();
 
-  }
+    if (!walletInstance) return;  
+
+    agContract.methods.transfer(cav.utils.toPeb("0.1", "KLAY")).send({
+      from: walletInstance.address,
+      gas: '250000'
+    }).then(function (receipt) {
+      if (receipt.status) {
+        spinner.stop();  
+        alert("0.1 KLAY가 " + walletInstance.address + " 계정으로 지급되었습니다.");      
+        $('#transaction').html("");
+        $('#transaction').append(`<p><a href='https://baobab.klaytnscope.com/tx/${receipt.transactionHash}' target='_blank'>클레이튼 Scope에서 트랜젝션 확인</a></p>`);
+        return agContract.methods.getBalance().call()
+          .then(function (balance) {
+            $('#contractBalance').html("");
+            $('#contractBalance').append('<p>' + '이벤트 잔액: ' + cav.utils.fromPeb(balance, "KLAY") + ' KLAY' + '</p>');           
+        });        
+      }
+    });      
+  }  
 };
 
 window.App = App;
