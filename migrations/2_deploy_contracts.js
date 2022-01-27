@@ -11,7 +11,7 @@ module.exports = function (deployer) {
                 console.log("파일에 ABI 입력 성공")
             }
         )
-        fs.writeFile('deployedAddress',AdditionGame.address, // 해당 파일에 주소 저장
+        fs.writeFile('deployedAddress',AdditionGame.address, // 해당 파일에 배포된 컨트랙 주소 저장
             (err) => {
                 if(err) throw err;
                 console.log("파일에 주소 입력 성공")

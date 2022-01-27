@@ -10,7 +10,7 @@ const agContract = new cav.klay.Contract(DEPLOYED_ABI, DEPLOYED_ADDRESS);
 
 const App = {
   auth: {
-    accessType: 'keystore',
+    accessType: '',
     keystore: '',
     password: ''
   },
@@ -28,19 +28,20 @@ const App = {
   },
 
   handleImport: async function () {
+    this.auth.accessType = 'keystore'; //keystore를 통한 로그인
     const fileReader = new FileReader();
     fileReader.readAsText(event.target.files[0]);
     fileReader.onload = (event) => {      
       try {     
         if (!this.checkValidKeystore(event.target.result)) {
-          $('#message').text('유효하지 않은 keystore 파일입니다.');
+          $('#message_pw').text('유효하지 않은 keystore 파일입니다.');
           return;
         }    
         this.auth.keystore = event.target.result;
-        $('#message').text('keystore 통과. 비밀번호를 입력하세요.');
+        $('#message_pw').text('keystore 통과. 비밀번호를 입력하세요.');
         document.querySelector('#input-password').focus();    
       } catch (event) {
-        $('#message').text('유효하지 않은 keystore 파일입니다.');
+        $('#message_pw').text('유효하지 않은 keystore 파일입니다.');
         return;
       }
     }   
@@ -51,12 +52,20 @@ const App = {
   },
 
   handleLogin: async function () {
-    if (this.auth.accessType === 'keystore') { 
+    if (this.auth.accessType === 'keystore') { //keystore 로그인 시
       try {
         const privateKey = cav.klay.accounts.decrypt(this.auth.keystore, this.auth.password).privateKey;
         this.integrateWallet(privateKey);
       } catch (e) {      
-        $('#message').text('비밀번호가 일치하지 않습니다.');
+        $('#message_pw').text('비밀번호가 일치하지 않습니다.');
+      }
+    }
+    else {  // 비밀키 로그인 시
+      try {
+        const privateKey = this.auth.password; 
+        this.integrateWallet(privateKey);
+      } catch (e) {
+        $('#message_pk').text('비밀키가 일치하지 않습니다.');
       }
     }
   },
@@ -168,8 +177,10 @@ const App = {
   },
 
   changeUI: async function (walletInstance) {
-    $('#loginModal').modal('hide');
-    $('#login').hide(); 
+    $('#loginModal_keystore').modal('hide');
+    $('#loginModal_privateKey').modal('hide');
+    $('#login_keystore').hide();
+    $('#login_privateKey').hide(); 
     $('#logout').show();
     $('#game').show();
     $('#address').append('<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>');     
@@ -187,7 +198,7 @@ const App = {
   },
 
   showTimer: function () {
-    var seconds = 3;
+    var seconds = 5;
     $('#timer').text(seconds);
 
     var interval = setInterval(() => {

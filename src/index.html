@@ -22,14 +22,23 @@
         <h1 class="text-center">클레이튼(Klaytn)</h1>
         <h3 class="text-center">속전속결 덧셈 게임</h1>
         <h3 class="text-center">
-          <code>3초안에 맞출 시 1 KLAY 지급 이벤트</code>  
+          <code>3초안에 맞출 시 1 KLAY 지급 이벤트</code> 
+          <div class="container"> 
           <button type="button" 
-                  class="btn btn-info pull-right" 
-                  id="login" 
+                  class="btn btn-info" 
+                  id="login_keystore" 
                   data-toggle="modal"
-                  data-target="#loginModal">
-                  로그인
+                  data-target="#loginModal_keystore">
+                  Keystore 파일로 로그인
           </button>
+          <button type="button" 
+                  class="btn btn-info" 
+                  id="login_privateKey" 
+                  data-toggle="modal"
+                  data-target="#loginModal_privateKey">
+                  비밀키로 로그인
+          </button>
+        </div>
           <button type="button" 
                   class="btn btn-info pull-right" 
                   id="logout" 
@@ -90,7 +99,7 @@
     </div>
   </div>  
 
-  <div class="modal fade" tabindex="-1" role="dialog" id="loginModal">
+  <div class="modal fade" tabindex="-1" role="dialog" id="loginModal_keystore">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">         
         <div class="modal-body">
@@ -101,7 +110,7 @@
           <div class="form-group">
             <label for="input-password">비밀번호</label>
             <input type="password" class="form-control" id="input-password" onchange="App.handlePassword()">
-            <p class="help-block" id="message"></p>
+            <p class="help-block" id="message_pw"></p>
           </div>
         </div>
         <div class="modal-footer">
@@ -111,6 +120,25 @@
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
   </div><!-- /.modal -->
+</body>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="loginModal_privateKey">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">         
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="input-privatekey">비밀키</label>
+          <input type="password" class="form-control" id="input-privatekey" onchange="App.handlePassword()">
+          <p class="help-block" id="message_pk"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">닫기</button>
+        <button type="button" class="btn btn-primary" id="submit" onclick="App.handleLogin()">제출</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 </body>
 
 </html>
