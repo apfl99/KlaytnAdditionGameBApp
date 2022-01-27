@@ -18,7 +18,8 @@
 
 
 3. Local web server Up
-<img width="998" alt="스크린샷 2022-01-27 오후 9 51 52" src="https://user-images.githubusercontent.com/64346003/151362457-9ac6df91-c4ef-4572-a4c8-f57af6da76fc.png">
+<img width="998" alt="스크린샷 2022-01-27 오후 9 51 52" src="https://user-images.githubusercontent.com/64346003/151363225-fe3162ae-9f95-4062-a641-913a96ebd801.png">
+
 
 ## Presentation
 
