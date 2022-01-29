@@ -2,26 +2,29 @@ import Caver from "caver-js";
 import { isTxHash } from "caver-js/packages/caver-utils";
 import { Spinner } from "spin.js";
 
+// 클레이튼 노드 정의
 const config = {
 	rpcURL: 'https://api.baobab.klaytn.net:8651'
 }
-const cav = new Caver(config.rpcURL);
-const agContract = new cav.klay.Contract(DEPLOYED_ABI, DEPLOYED_ADDRESS);
+const cav = new Caver(config.rpcURL); //인스턴스화
+const agContract = new cav.klay.Contract(DEPLOYED_ABI, DEPLOYED_ADDRESS); // 컨트랙 정보(deployedABI, deployedAddress)를 가져와서 인스턴스화
 
 const App = {
+  //인증 필드 정의
   auth: {
     accessType: '',
     keystore: '',
     password: ''
   },
 
+  // 웹페이지 접속시 처음 실행되는 로직
   start: async function () {
-    const walletFromSession = sessionStorage.getItem('walletInstance');
-    if (walletFromSession) {
-      try {
-        cav.klay.accounts.wallet.add(JSON.parse(walletFromSession));
-        this.changeUI(JSON.parse(walletFromSession));
-      } catch(e) {
+    const walletFromSession = sessionStorage.getItem('walletInstance'); // 세션에 있는 wallet 계정 정보 import
+    if (walletFromSession) { // 세션 값 확인
+      try { // 유효
+        cav.klay.accounts.wallet.add(JSON.parse(walletFromSession)); // 세션에 있는 정보로 caver wallet 추가
+        this.changeUI(JSON.parse(walletFromSession)); // UI 최신화
+      } catch(e) { 
         sessionStorage.removeItem('walletInstance');
       }
     }
@@ -30,17 +33,17 @@ const App = {
   handleImport: async function () {
     this.auth.accessType = 'keystore'; //keystore를 통한 로그인
     const fileReader = new FileReader();
-    fileReader.readAsText(event.target.files[0]);
+    fileReader.readAsText(event.target.files[0]); // 선택한 파일 읽기
     fileReader.onload = (event) => {      
       try {     
-        if (!this.checkValidKeystore(event.target.result)) {
+        if (!this.checkValidKeystore(event.target.result)) { //keystore 파일 유효성 검사
           $('#message_pw').text('유효하지 않은 keystore 파일입니다.');
           return;
         }    
-        this.auth.keystore = event.target.result;
+        this.auth.keystore = event.target.result; //auth.keystore 저장
         $('#message_pw').text('keystore 통과. 비밀번호를 입력하세요.');
-        document.querySelector('#input-password').focus();    
-      } catch (event) {
+        document.querySelector('#input-password').focus();
+      } catch (event) { // 파일 읽기에서 error
         $('#message_pw').text('유효하지 않은 keystore 파일입니다.');
         return;
       }
@@ -48,14 +51,15 @@ const App = {
   },
 
   handlePassword: async function () {
-    this.auth.password = event.target.value;
+    this.auth.password = event.target.value; // auth.password 저장
   },
 
   handleLogin: async function () {
     if (this.auth.accessType === 'keystore') { //keystore 로그인 시
       try {
+        // keystore와 password 정보를 가지고 privatekey 추출(복호화)
         const privateKey = cav.klay.accounts.decrypt(this.auth.keystore, this.auth.password).privateKey;
-        this.integrateWallet(privateKey);
+        this.integrateWallet(privateKey); // wallet 인스턴스 생성
       } catch (e) {      
         $('#message_pw').text('비밀번호가 일치하지 않습니다.');
       }
@@ -71,14 +75,14 @@ const App = {
   },
 
   handleLogout: async function () {
-    this.removeWallet();
-    location.reload();
+    this.removeWallet(); //wallet 계정, 세션, auth 초기화
+    location.reload(); //새로고침
   },
 
   generateNumbers: async function () {
     var num1 = Math.floor((Math.random() * 50 ) + 10);
     var num2 = Math.floor((Math.random() * 50 ) + 10);
-    sessionStorage.setItem('result', num1+num2);
+    sessionStorage.setItem('result', num1+num2); //세션에 정답 저장
 
     $('#start').hide();
     $('#num1').text(num1);
@@ -90,12 +94,12 @@ const App = {
   },
 
   submitAnswer: async function () {
-    const result = sessionStorage.getItem('result');
-    var answer = $('#answer').val();
-    if (answer === result) {
+    const result = sessionStorage.getItem('result'); // 세션에서 정답을 가져옴
+    var answer = $('#answer').val(); // 사용자 입력값 가져옴
+    if (answer === result) { // 비교
       if(confirm("Good Job!! 0.1 KLAY 받기")) {
-        if(await this.callContractBalance() >= 0.1) {
-          this.receiveKlay();
+        if(await this.callContractBalance() >= 0.1) { //계정 잔액이 0.1보다 클때 
+          this.receiveKlay(); // 전송
         }
         else {
           alert("죄송합니다. 컨트랙의 KLAY가 다 소모되었습니다.");
@@ -106,24 +110,27 @@ const App = {
     }
   },
 
+  //컨트랙에 송금
   deposit: async function () {
     var spinner = this.showSpinner();
-    const walletInstance = this.getWallet();
+    const walletInstance = this.getWallet(); // 현재 로그인 정보(caver wallet)
 
     if (walletInstance) {
+      // 로그인 계정 주소와 컨트랙 계정 주소 비교
+      // 다를 경우 진행 불가
       if ((await this.callOwner()).toUpperCase() !== walletInstance.address.toUpperCase()) return;
       else {
-        var amount = $('#amount').val();
+        var amount = $('#amount').val(); // html 입력값 가져옴
         if (amount) {
-          agContract.methods.deposit().send({
+          agContract.methods.deposit().send({ // klay 전송(호출 주소, 가스 비용, 전송 금액)
             from: walletInstance.address,
             gas: '250000',
             value: cav.utils.toPeb(amount, "KLAY")
           })
-          .once('transactionHash', (txHash) => {
+          .once('transactionHash', (txHash) => { // 트랜잭션 해쉬 확인
             console.log(`txHash: ${txHash}`)
           })
-          .once('receipt',(receipt) => {
+          .once('receipt',(receipt) => { // 영수증 확인 후 전송 완결.
             console.log(`(#${receipt.blocknumber})`, receipt);
             spinner.stop();
             alert(amount + "KLAY를 컨트랙에 송금했습니다.");
@@ -133,27 +140,28 @@ const App = {
             alert(error.message);
           });
         }
-        return;
+        return; // amount가 없을 경우
       } 
     }
   },
 
   callOwner: async function () {
-    return await agContract.methods.owner().call();
+    return await agContract.methods.owner().call(); // 배포된 컨트랙의 owner 반환(비동기)
   },
 
   callContractBalance: async function () {
-    return await agContract.methods.getBalance().call();
+    return await agContract.methods.getBalance().call(); //getBalance를 통해 컨트랙 잔액 반환
   },
 
   getWallet: function () {
-    if (cav.klay.accounts.wallet.length) {
-      return cav.klay.accounts.wallet[0]; // 로그인 계정
+    if (cav.klay.accounts.wallet.length) { // 로그인 계정이 있다면
+      return cav.klay.accounts.wallet[0]; // 로그인 계정 반환
     }
   },
 
   checkValidKeystore: function (keystore) {
-    const parsedKeystore = JSON.parse(keystore);
+    const parsedKeystore = JSON.parse(keystore); //keystore 파일 내용 분해 및 오브젝트로
+    //keystore v4 형식
     const isValidKeystore = parsedKeystore.version &&
       parsedKeystore.id &&
       parsedKeystore.address &&
@@ -164,11 +172,12 @@ const App = {
 
   integrateWallet: function (privateKey) {
     const walletInstance = cav.klay.accounts.privateKeyToAccount(privateKey);
-    cav.klay.accounts.wallet.add(walletInstance)
-    sessionStorage.setItem('walletInstance', JSON.stringify(walletInstance));
-    this.changeUI(walletInstance);  
+    cav.klay.accounts.wallet.add(walletInstance) // 생성한 인스턴스를 caver wallet에 추가
+    sessionStorage.setItem('walletInstance', JSON.stringify(walletInstance)); // 세션 처리(로그인 유지)
+    this.changeUI(walletInstance);  //로그인 시 UI 변경
   },
 
+  // auth 전역변수 초기화
   reset: function () {
     this.auth = {
       keystore: '',
@@ -176,6 +185,7 @@ const App = {
     };
   },
 
+  //UI
   changeUI: async function (walletInstance) {
     $('#loginModal_keystore').modal('hide');
     $('#loginModal_privateKey').modal('hide');
@@ -186,15 +196,16 @@ const App = {
     $('#address').append('<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>');     
     $('#contractBalance').append('<p>' + '이벤트 잔액: ' + cav.utils.fromPeb(await this.callContractBalance(), "KLAY") + 'KLAY' + '</p>');
     
+    //컨트랙 송금 html 조건(owner와 로그인 계정 정보 확인)
     if ((await this.callOwner()).toUpperCase() === walletInstance.address.toUpperCase()) {
       $('#owner').show();
     }
   },
 
   removeWallet: function () {
-    cav.klay.accounts.wallet.clear();
-    sessionStorage.removeItem('walletInstance');
-    this.reset();
+    cav.klay.accounts.wallet.clear(); // wallet 계정 초기화
+    sessionStorage.removeItem('walletInstance'); //세션 초기화
+    this.reset(); //auth 전역변수 초기화
   },
 
   showTimer: function () {
@@ -220,14 +231,14 @@ const App = {
 
   receiveKlay: function () {
     var spinner = this.showSpinner();
-    const walletInstance = this.getWallet();
+    const walletInstance = this.getWallet(); // 로그인 wallet 계정 가져옴
 
-    if (!walletInstance) return;  
+    if (!walletInstance) return;  // 없을 경우 리턴
 
-    agContract.methods.transfer(cav.utils.toPeb("0.1", "KLAY")).send({
+    agContract.methods.transfer(cav.utils.toPeb("0.1", "KLAY")).send({ // 송금
       from: walletInstance.address,
       gas: '250000'
-    }).then(function (receipt) {
+    }).then(function (receipt) { // 영수증 발행 및 전송 트랙잭션 완결
       if (receipt.status) {
         spinner.stop();  
         alert("0.1 KLAY가 " + walletInstance.address + " 계정으로 지급되었습니다.");      
