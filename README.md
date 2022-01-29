@@ -24,9 +24,11 @@
 1. Login
 
 Using keystore file.
+
 ![Login using keystore file](https://user-images.githubusercontent.com/64346003/151661470-02267a16-c3f9-40a4-a6f3-1990f730b684.gif)
 
 Using privatekey.
+
 ![Login using privatekey](https://user-images.githubusercontent.com/64346003/151661500-0a9560b2-1fc1-4743-bd0a-ef3d933dd345.gif)
 
 2. Transfer money from the distributor's account to the contract.
