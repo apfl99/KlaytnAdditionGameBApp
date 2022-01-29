@@ -32,9 +32,11 @@ Using privatekey.
 ![Login using privatekey](https://user-images.githubusercontent.com/64346003/151661500-0a9560b2-1fc1-4743-bd0a-ef3d933dd345.gif)
 
 2. Transfer money from the distributor's account to the contract.
+
 ![Transfer money from the distributor's account to the contract](https://user-images.githubusercontent.com/64346003/151661512-faa08bdb-418c-4e20-b41a-53be9042eca7.gif)
 
 3. Playing games and getting klaytn with a regular account.
+
 ![Playing games and getting klaytn with a regular account](https://user-images.githubusercontent.com/64346003/151661522-ea210d62-0e4d-4922-9941-fe4d31c7d656.gif)
 
 ## Reference
