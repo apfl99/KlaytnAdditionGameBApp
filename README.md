@@ -8,7 +8,7 @@
 * Npm v6.4.1
 * Truffle v4.1.15
 * Solidity v0.4.25
-* Caver-js v1.6.7
+* Caver-js v1.2.0
 
 ## Execution
 1. Open Terminal
